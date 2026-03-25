@@ -1,0 +1,51 @@
+name: "Release HyTicker"
+
+# Trigger the workflow only when a new tag starting with 'v' is pushed
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # Currently optimized for Windows as per your requirement
+        # You can add 'macos-latest' or 'ubuntu-22.04' to this list later
+        platform: [windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          # Optional: If you use pnpm or yarn, uncomment the line below
+          # cache: 'npm' 
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        # This will run 'npm install' to prepare your Vue + Tailwind frontend
+        run: npm install
+
+      - name: Build and Publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          # This token is automatically provided by GitHub Actions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Automatically extracts version from your package.json
+          tagName: v__VERSION__ 
+          releaseName: "HyTicker v__VERSION__"
+          releaseBody: "Automated release for HyTicker. See attached assets for the installer."
+          # Set to true so you can review the release before it goes public
+          releaseDraft: true
+          prerelease: false
