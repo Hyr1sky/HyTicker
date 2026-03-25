@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta viewport="width=device-width, initial-scale=1.0" />
+    <title>Magnetic Balls</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+    <!-- <script src="gsap.js"></script> -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-size: 1vmin;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100vh;
+        background-color: #310e68;
+      }
+
+      .container {
+        position: absolute;
+        width: 75rem;
+        height: 75rem;
+        overflow: visible;
+        background-color: #462779;
+      }
+
+      .container line {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2;
+      }
+    </style>
+  </head>
+
+  <body>
+    <svg class="container"></svg>
+  </body>
+
+  <script>
+    const magnectic = {
+      container: document.querySelector(".container"),
+      width: 0,
+      height: 0,
+      top: 0,
+      left: 0,
+      container_radius: 0,
+      lines: 18,
+      rows: 18,
+      mouse_radius: 120,
+      balls: [],
+      init() {
+        this.resize();
+        this.create_balls();
+        document.addEventListener("mousemove", (e) => {
+          this.move_balls(e.x, e.y);
+        });
+      },
+      
+      resize() {
+        this.width = this.container.getBoundingClientRect().width;
+        this.height = this.container.getBoundingClientRect().height;
+        this.container_radius = Math.min(this.width, this.height) / 2;
+        this.top = this.container.getBoundingClientRect().top;
+        this.left = this.container.getBoundingClientRect().left;
+      },
+
+      create_balls() {
+        let radius = this.width / (this.lines * 2 - 1) + 5;
+        for (let i = 0; i < this.lines; i++) {
+          for (let j = 0; j < this.rows; j++) {
+            let x = (this.width / (this.lines - 1)) * i;
+            let y = (this.height / (this.rows - 1)) * j;
+            let distance_center = Math.sqrt((x - this.width / 2) ** 2 + (y - this.height / 2) ** 2);
+            console.log(distance_center);
+            if (distance_center >= this.container_radius) {
+                continue ;
+            }
+            let new_radius = radius * (1 - distance_center / this.container_radius / 2);
+            let ball = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "circle"
+            );
+            ball.setAttribute("cx", x);
+            ball.setAttribute("cy", y);
+            ball.setAttribute("r", new_radius);
+            ball.setAttribute("fill", "#141453FF");
+            let point = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "circle"
+            );
+            point.setAttribute("cx", x);
+            point.setAttribute("cy", y);
+            point.setAttribute("r", new_radius / 5);
+            point.setAttribute("fill", "#FFFFFFFF");
+            let line = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "line"
+            );
+            line.setAttribute("x1", x);
+            line.setAttribute("y1", y);
+            line.setAttribute("x2", x);
+            line.setAttribute("y2", y);
+            line.setAttribute("stroke", "#E28560FF");
+            this.container.appendChild(point);
+            this.container.appendChild(line);
+            this.container.appendChild(ball);
+            ball.line = line;
+            ball.original_x = x;
+            ball.original_y = y;
+            this.balls.push(ball);
+          }
+        }
+      },
+      
+      move_balls(x, y) {
+        this.balls.forEach((ball) => {
+          let dx = x - (ball.original_x + this.left);
+          let dy = y - (ball.original_y + this.top);
+          let distance = Math.sqrt(dx ** 2 + dy ** 2);
+          if (distance < this.mouse_radius) {
+            ball.move_x = x - this.left - (dx / distance) * this.mouse_radius;
+            ball.move_y = y - this.top - (dy / distance) * this.mouse_radius;
+            if (ball.animater) ball.animater.kill();
+            ball.animater = gsap
+              .timeline()
+              .to(ball, {
+                attr: {
+                  cx: ball.move_x,
+                  cy: ball.move_y,
+                },
+                duration: 0.5,
+                ease: "power3.out",
+              })
+              .to(
+                ball.line,
+                {
+                  attr: {
+                    x2: ball.move_x,
+                    y2: ball.move_y,
+                  },
+                  duration: 0.5,
+                  ease: "power3.out",
+                },
+                "<"
+              )
+              .to(
+                ball,
+                {
+                  attr: {
+                    cx: ball.original_x,
+                    cy: ball.original_y,
+                  },
+                  duration: 1,
+                  ease: "power3.out",
+                },
+                "<0.1"
+              )
+              .to(
+                ball.line,
+                {
+                  attr: {
+                    x2: ball.original_x,
+                    y2: ball.original_y,
+                  },
+                  duration: 1,
+                  ease: "power3.out",
+                },
+                "<"
+              );
+          }
+        });
+      },
+    };
+    magnectic.init();
+  </script>
+</html>

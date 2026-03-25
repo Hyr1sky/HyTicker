@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* 全局重置：透明背景 + 无滚动条 */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Candara', 'FZYaoTi', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  font-feature-settings: 'onum' 1, 'pnum' 1;
+}
+
+/* 数字使用 Georgia oldstyle figures */
+.font-mono, .tabular-nums, [class*="font-mono"] {
+  font-family: 'Georgia', 'Candara', serif;
+  font-feature-settings: 'onum' 1;
+}
+
+/* 隐藏所有滚动条 */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+* {
+  scrollbar-width: none;
+}
