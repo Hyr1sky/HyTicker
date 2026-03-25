@@ -30,7 +30,7 @@ HyTicker 用点阵矩阵可视化时间流逝 —— 每一个小圆点代表一
 ## ▶️ 预览
 
 <div align="center">
-  <img src="./dist/assets/Preview.png" alt="MainPage" width="50%" />
+  <img src="/public/Preview.png" alt="MainPage" width="50%" />
 </div>
 
 ## 🛠️ 技术栈
