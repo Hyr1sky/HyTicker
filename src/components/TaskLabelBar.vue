@@ -54,7 +54,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onClickOutside))
       {{ l.name }}
       <span
         v-if="l.id !== 'default'"
-        class="hidden group-hover:inline text-neutral-500 hover:text-red-400 ml-0.5"
+        class="inline-flex overflow-hidden max-w-0 opacity-0 group-hover:max-w-[16px] group-hover:opacity-100 transition-all duration-200 ease-out text-neutral-500 hover:text-red-400"
         @click.stop="removeLabel(l.id)"
       >&times;</span>
     </button>

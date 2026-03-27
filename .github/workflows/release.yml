@@ -1,6 +1,5 @@
 name: "Release HyTicker"
 
-# Trigger the workflow only when a new tag starting with 'v' is pushed
 on:
   push:
     tags:
@@ -13,39 +12,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Currently optimized for Windows as per your requirement
-        # You can add 'macos-latest' or 'ubuntu-22.04' to this list later
         platform: [windows-latest]
 
     runs-on: ${{ matrix.platform }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    
+    # Force the runner to use Node.js 24 for all Javascript actions
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+    steps:
+      # Upgraded to v5 to match Node 24 environment
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Upgraded to v5 for better Node 24 compatibility
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: lts/*
-          # Optional: If you use pnpm or yarn, uncomment the line below
-          # cache: 'npm' 
+          node-version: 24 # Use the latest LTS Node version
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install dependencies
-        # This will run 'npm install' to prepare your Vue + Tailwind frontend
         run: npm install
 
       - name: Build and Publish
         uses: tauri-apps/tauri-action@v0
         env:
-          # This token is automatically provided by GitHub Actions
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Automatically extracts version from your package.json
-          tagName: v__VERSION__ 
+          tagName: v__VERSION__
           releaseName: "HyTicker v__VERSION__"
-          releaseBody: "Automated release for HyTicker. See attached assets for the installer."
-          # Set to true so you can review the release before it goes public
+          releaseBody: "Automated release for HyTicker (Node 24 Optimized)."
           releaseDraft: true
           prerelease: false

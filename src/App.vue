@@ -32,9 +32,31 @@ const alwaysOnTop = ref(true)
 const immersive = computed(() => currentMode.value === TimeMode.CUSTOM && status.value === 'running')
 
 // ── 番茄钟完成回调 ──────────────────────────────
+function playCompletionSound() {
+  try {
+    const ctx = new AudioContext()
+    const notes = [659.25, 783.99, 1046.50] // E5, G5, C6
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      const start = ctx.currentTime + i * 0.15
+      gain.gain.setValueAtTime(0.3, start)
+      gain.gain.exponentialRampToValueAtTime(0.01, start + 0.3)
+      osc.start(start)
+      osc.stop(start + 0.3)
+    })
+  } catch { /* audio not available */ }
+}
+
 async function onPomodoroComplete() {
   // 记录统计
   await recordPomodoro(activeLabel.value.name, customMinutes.value, true, activeLabel.value.color)
+  // 提示音效
+  playCompletionSound()
   // 桌面通知
   try {
     const { sendNotification } = await import('@tauri-apps/plugin-notification')
@@ -155,7 +177,7 @@ onMounted(async () => {
 
     <!-- 底部剩余时间 -->
     <div v-show="!immersive" class="px-3 py-1.5 text-center border-t border-white/10">
-      <span class="text-neutral-500" :style="{ fontSize: fontSize + 'px' }">{{ t.remaining }} </span>
+      <span class="text-neutral-500 pr-1" :style="{ fontSize: fontSize + 'px' }">{{ t.remaining }} </span>
       <span class="font-mono tabular-nums" :style="{ color: accentColor, fontSize: (fontSize + 2) + 'px' }">{{ remainingText }}</span>
     </div>
 

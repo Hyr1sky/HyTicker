@@ -85,7 +85,10 @@ function onWheelMove(e: MouseEvent) {
   if (dragging) pickColor(e)
 }
 function onWheelUp() {
-  dragging = false
+  if (dragging) {
+    dragging = false
+    showWheel.value = false
+  }
 }
 
 onMounted(() => {

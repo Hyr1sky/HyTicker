@@ -62,6 +62,8 @@ const translations = {
     statsTooltip: '统计',
     pomodoroComplete: '番茄钟完成！',
     pomodoroCompleteBody: '休息一下吧 🍅',
+    dayDetail: '当日明细',
+    noRecords: '暂无记录',
   },
   en: {
     appName: 'HyTicker',
@@ -119,6 +121,8 @@ const translations = {
     statsTooltip: 'Statistics',
     pomodoroComplete: 'Pomodoro Complete!',
     pomodoroCompleteBody: 'Time for a break 🍅',
+    dayDetail: 'Day Detail',
+    noRecords: 'No records',
   },
 } as const
 

@@ -184,7 +184,7 @@ function drawCanvas() {
     ctx.fillStyle = isPassed ? accent : '#555555'
     const radius = (dotSize / 2) * (dotBorderRadius.value === '50%' ? 1 : parseInt(dotBorderRadius.value) / 50)
     ctx.beginPath()
-    ctx.roundRect(x, y, dotSize, dotSize, radius * (dotSize / 2))
+    ctx.roundRect(x, y, dotSize, dotSize, radius)
     ctx.fill()
   }
   ctx.shadowColor = 'transparent'
@@ -241,7 +241,7 @@ onUnmounted(() => {
     ref="containerRef"
     class="grid justify-center"
     :style="{
-      gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+      gridTemplateColumns: `repeat(auto-fill, 10px)`,
       gap: '5px',
       padding: '4px',
     }"
