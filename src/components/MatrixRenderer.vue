@@ -13,14 +13,6 @@ const { accentColor, dotBorderRadius, dotAnimation, dotPlayEffect } = useSetting
 const DOT_THRESHOLD = 500
 const useCanvas = computed(() => props.totalDots > DOT_THRESHOLD && !dotPlayEffect.value)
 
-const columns = computed(() => {
-  const t = props.totalDots
-  if (t <= 100) return 10
-  if (t <= 300) return 15
-  if (t <= 500) return 20
-  return 24
-})
-
 // ── GSAP play effect state ──
 const containerRef = ref<HTMLElement | null>(null)
 
