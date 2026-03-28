@@ -83,7 +83,7 @@ src-tauri/
 
 ```bash
 # 克隆项目
-git clone https://github.com/<your-username>/HyTicker.git
+git clone https://github.com/Hyr1sky/HyTicker.git
 cd HyTicker
 
 # 安装依赖

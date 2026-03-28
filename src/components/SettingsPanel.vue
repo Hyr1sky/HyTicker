@@ -5,10 +5,10 @@ import { useSettings } from '../composables/useSettings'
 
 const { t, locale, setLocale } = useI18n()
 const {
-  accentColor, dotRoundness, fontSize, buttonSize,
-  windowOpacity, bgColor, dotDensity, dotAnimation, dotPlayEffect,
+  accentColor, dotRoundness, dotBorderRadius, fontSize, buttonSize,
+  windowOpacity, bgColor, dotDensity, dotSize, dotAnimation, dotPlayEffect,
   setAccentColor, setDotRoundness, setFontSize, setButtonSize,
-  setWindowOpacity, setBgColor, setDotDensity, setDotAnimation, setDotPlayEffect,
+  setWindowOpacity, setBgColor, setDotDensity, setDotSize, setDotAnimation, setDotPlayEffect,
 } = useSettings()
 
 defineProps<{ visible: boolean }>()
@@ -116,6 +116,9 @@ function onOpacityInput(e: Event) {
 }
 function onDensityInput(e: Event) {
   setDotDensity(parseInt((e.target as HTMLInputElement).value, 10))
+}
+function onDotSizeInput(e: Event) {
+  setDotSize(parseInt((e.target as HTMLInputElement).value, 10))
 }
 
 const bgPresetColors = ['#4B4B4B', '#1a1a2e', '#2d2d2d', '#1e3a5f', '#3b1f2b', '#2e4a3e']
@@ -287,6 +290,28 @@ const bgPresetColors = ['#4B4B4B', '#1a1a2e', '#2d2d2d', '#1e3a5f', '#3b1f2b', '
           </div>
         </div>
 
+        <!-- 圆点大小 -->
+        <div>
+          <label class="text-xs text-neutral-400 mb-2 block">{{ t.dotSize }}</label>
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] text-neutral-500">4</span>
+            <input
+              type="range"
+              min="4"
+              max="16"
+              :value="dotSize"
+              class="flex-1 h-1 accent-neutral-500 cursor-pointer"
+              @input="onDotSizeInput"
+            />
+            <span class="text-[10px] text-neutral-500">16</span>
+            <div
+              class="ml-1"
+              :style="{ width: dotSize + 'px', height: dotSize + 'px', backgroundColor: accentColor, borderRadius: dotBorderRadius }"
+            />
+            <span class="text-[10px] text-neutral-400 font-mono w-6 text-right">{{ dotSize }}</span>
+          </div>
+        </div>
+
         <!-- 点阵密度 -->
         <div>
           <label class="text-xs text-neutral-400 mb-2 block">{{ t.dotDensity }}</label>
@@ -294,7 +319,7 @@ const bgPresetColors = ['#4B4B4B', '#1a1a2e', '#2d2d2d', '#1e3a5f', '#3b1f2b', '
             <span class="text-[10px] text-neutral-500">{{ t.sparse }}</span>
             <input
               type="range"
-              min="50"
+              min="25"
               max="200"
               :value="dotDensity"
               class="flex-1 h-1 accent-neutral-500 cursor-pointer"

@@ -7,7 +7,8 @@ const fontSize = ref(12)
 const buttonSize = ref(24)
 const windowOpacity = ref(88)     // 0-100
 const bgColor = ref('#4B4B4B')
-const dotDensity = ref(100)       // 50-200 百分比
+const dotDensity = ref(50)        // 25-200 百分比
+const dotSize = ref(10)           // 4-16 圆点大小(px)
 const dotAnimation = ref(true)    // 点阵动效开关
 const dotPlayEffect = ref(false)  // 点阵游玩特效 (GSAP)
 
@@ -27,6 +28,7 @@ interface PersistedSettings {
   windowOpacity: number
   bgColor: string
   dotDensity: number
+  dotSize: number
   dotAnimation: boolean
   dotPlayEffect: boolean
 }
@@ -40,6 +42,7 @@ function getSnapshot(): PersistedSettings {
     windowOpacity: windowOpacity.value,
     bgColor: bgColor.value,
     dotDensity: dotDensity.value,
+    dotSize: dotSize.value,
     dotAnimation: dotAnimation.value,
     dotPlayEffect: dotPlayEffect.value,
   }
@@ -57,7 +60,8 @@ export async function loadSettings() {
     buttonSize.value = data.buttonSize ?? 24
     windowOpacity.value = data.windowOpacity ?? 88
     bgColor.value = data.bgColor ?? '#4B4B4B'
-    dotDensity.value = data.dotDensity ?? 100
+    dotDensity.value = data.dotDensity ?? 50
+    dotSize.value = data.dotSize ?? 10
     dotAnimation.value = data.dotAnimation ?? true
     dotPlayEffect.value = data.dotPlayEffect ?? false
   }
@@ -72,7 +76,7 @@ function debouncedSave() {
 
 // 自动持久化
 watch(
-  [accentColor, dotRoundness, fontSize, buttonSize, windowOpacity, bgColor, dotDensity, dotAnimation, dotPlayEffect],
+  [accentColor, dotRoundness, fontSize, buttonSize, windowOpacity, bgColor, dotDensity, dotSize, dotAnimation, dotPlayEffect],
   debouncedSave,
 )
 
@@ -83,7 +87,8 @@ export function useSettings() {
   function setButtonSize(val: number) { buttonSize.value = Math.max(18, Math.min(32, val)) }
   function setWindowOpacity(val: number) { windowOpacity.value = Math.max(20, Math.min(100, val)) }
   function setBgColor(color: string) { bgColor.value = color }
-  function setDotDensity(val: number) { dotDensity.value = Math.max(50, Math.min(200, val)) }
+  function setDotDensity(val: number) { dotDensity.value = Math.max(25, Math.min(200, val)) }
+  function setDotSize(val: number) { dotSize.value = Math.max(4, Math.min(16, val)) }
   function setDotAnimation(val: boolean) { dotAnimation.value = val }
   function setDotPlayEffect(val: boolean) { dotPlayEffect.value = val }
 
@@ -91,11 +96,11 @@ export function useSettings() {
     accentColor, dotRoundness, dotBorderRadius,
     fontSize, buttonSize,
     windowOpacity, bgColor,
-    dotDensity, densityScale,
+    dotDensity, densityScale, dotSize,
     dotAnimation, dotPlayEffect,
     setAccentColor, setDotRoundness,
     setFontSize, setButtonSize,
     setWindowOpacity, setBgColor,
-    setDotDensity, setDotAnimation, setDotPlayEffect,
+    setDotDensity, setDotSize, setDotAnimation, setDotPlayEffect,
   }
 }

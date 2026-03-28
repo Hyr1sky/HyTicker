@@ -19,7 +19,7 @@ export interface TimeEngineOptions {
   customDurationSec?: Ref<number>
   /** 矩阵最大点数上限，防止渲染过多 DOM */
   maxDots?: number
-  /** 密度比例 (0.5 ~ 2.0)，乘以基础点数 */
+  /** 密度比例 (0.25 ~ 2.0)，乘以基础点数 */
   densityScale?: Ref<number>
   /** 自定义番茄钟完成回调 */
   onComplete?: () => void
@@ -47,7 +47,7 @@ export interface TimeEngineReturn {
  * CUSTOM 模式需手动 start()。
  */
 export function useTimeEngine(options: TimeEngineOptions): TimeEngineReturn {
-  const { mode, customDurationSec, maxDots = 1440, densityScale, onComplete } = options
+  const { mode, customDurationSec, maxDots = 2880, densityScale, onComplete } = options
 
   // ── 响应式状态 ──────────────────────────────────
   const totalDots = ref(0)
@@ -153,20 +153,20 @@ export function useTimeEngine(options: TimeEngineOptions): TimeEngineReturn {
     const elapsedMs = now.getTime() - periodStartMs
     const ratio = Math.min(elapsedMs / periodTotalMs, 1)
 
-    // 根据模式选择合适的点数
+    // 根据模式选择合适的点数，使得各个模式的基础点数相近（保持在 1400 左右）
     let dots: number
     switch (m) {
       case TimeMode.DAY:
-        dots = clampDots(24 * 60) // 每分钟 1 个点 → 1440
+        dots = clampDots(24 * 30) // 每 2 分钟 1 个点 → 720
         break
       case TimeMode.WEEK:
-        dots = clampDots(7 * 24 * 2) // 每半小时 1 个点 → 336
+        dots = clampDots(7 * 24 * 4) // 每 15 分钟 1 个点 → 672
         break
       case TimeMode.MONTH:
-        dots = clampDots(daysInMonth(now) * 24) // 每小时 1 个点
+        dots = clampDots(daysInMonth(now) * 24) // 每 1 小时 1 个点 → 672~744
         break
       case TimeMode.YEAR:
-        dots = clampDots(daysInYear(now)) // 每天 1 个点
+        dots = clampDots(daysInYear(now) * 2) // 每 12 小时 1 个点 → 730~732
         break
       default:
         dots = 0

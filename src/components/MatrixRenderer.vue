@@ -8,10 +8,12 @@ const props = defineProps<{
   passedDots: number
 }>()
 
-const { accentColor, dotBorderRadius, dotAnimation, dotPlayEffect } = useSettings()
+const { accentColor, dotBorderRadius, dotAnimation, dotPlayEffect, dotSize: dotSizeSetting } = useSettings()
 
 const DOT_THRESHOLD = 500
 const useCanvas = computed(() => props.totalDots > DOT_THRESHOLD && !dotPlayEffect.value)
+
+const displayPassedDots = ref(0)
 
 // ── GSAP play effect state ──
 const containerRef = ref<HTMLElement | null>(null)
@@ -44,7 +46,7 @@ function onMouseMove(e: MouseEvent) {
   const mx = e.clientX - containerRect.left
   const my = e.clientY - containerRect.top
   const mouseRadius = 25
-  const passed = props.passedDots
+  const passed = displayPassedDots.value
 
   dotMetas.forEach((meta, idx) => {
     // Only interact with colored dots
@@ -91,44 +93,65 @@ function onMouseLeave() {
   })
 }
 
-// Track previous passed dots for animation
-let prevPassed = 0
+// ── Sequential Lighting Animation (逐行点亮) ──
+let animationObj: gsap.core.Tween | null = null
 
-function animateNewDots() {
-  if (!dotAnimation.value || useCanvas.value) return
-  nextTick(() => {
-    if (!containerRef.value) return
-    const children = Array.from(containerRef.value.children) as HTMLElement[]
-    const newlyPassed = props.passedDots
+function updateDisplayPassedDots(forceRestart = false) {
+  if (animationObj) {
+    animationObj.kill()
+    animationObj = null
+  }
 
-    // Animate every colored dot that is new since last check
-    if (newlyPassed > prevPassed) {
-      const start = Math.max(prevPassed, 0)
-      for (let i = start; i < newlyPassed && i < children.length; i++) {
-        gsap.fromTo(children[i], {
-          scale: 0,
-          opacity: 0,
-        }, {
-          scale: 1,
-          opacity: 1,
-          duration: 0.4,
-          delay: (i - start) * 0.02,
-          ease: 'back.out(2)',
-          overwrite: true,
-        })
+  if (!dotAnimation.value) {
+    displayPassedDots.value = props.passedDots
+    return
+  }
+
+  const target = props.passedDots
+
+  if (forceRestart) {
+    displayPassedDots.value = 0
+  }
+
+  const current = displayPassedDots.value
+  const distance = Math.abs(target - current)
+
+  if (distance === 0) return
+
+  if (distance <= 1) {
+    displayPassedDots.value = target
+  } else {
+    // Animated sequential fill over time
+    const dur = Math.min(2.0, Math.max(0.5, distance * 0.003))
+    const proxy = { val: current }
+    animationObj = gsap.to(proxy, {
+      val: target,
+      duration: dur,
+      ease: 'power2.inOut',
+      onUpdate: () => {
+        displayPassedDots.value = Math.round(proxy.val)
       }
-    }
-    prevPassed = newlyPassed
-  })
+    })
+  }
 }
 
-// Reset prevPassed when total dots change (mode switch / density change)
 watch(() => props.totalDots, () => {
-  prevPassed = 0
   nextTick(() => computeOriginalPositions())
+  updateDisplayPassedDots(true)
 })
 
-watch(() => props.passedDots, animateNewDots)
+watch(() => props.passedDots, (newVal, oldVal) => {
+  const isReset = oldVal !== undefined && newVal === 0
+  updateDisplayPassedDots(isReset)
+})
+
+watch(() => dotAnimation.value, (val) => {
+  if (!val && animationObj) {
+    animationObj.kill()
+    animationObj = null
+  }
+  displayPassedDots.value = props.passedDots
+})
 
 watch([dotPlayEffect], () => {
   nextTick(() => {
@@ -138,45 +161,51 @@ watch([dotPlayEffect], () => {
 
 // ── Canvas mode (high dot count) ──
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+const canvasWrapRef = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
 
 function drawCanvas() {
   const canvas = canvasRef.value
-  if (!canvas) return
+  const wrap = canvasWrapRef.value
+  if (!canvas || !wrap) return
   const ctx = canvas.getContext('2d')
   if (!ctx) return
 
   const dpr = window.devicePixelRatio || 1
-  const rect = canvas.getBoundingClientRect()
-  canvas.width = rect.width * dpr
-  canvas.height = rect.height * dpr
+  const wrapWidth = wrap.clientWidth
+
+  const ds = dotSizeSetting.value
+  const gap = 5
+  const cellSize = ds + gap
+  const cols = Math.floor(wrapWidth / cellSize) || 1
+  const total = props.totalDots
+  const passed = displayPassedDots.value
+  const accent = accentColor.value
+  const rows = Math.ceil(total / cols)
+  const requiredHeight = rows * cellSize
+
+  canvas.style.width = wrapWidth + 'px'
+  canvas.style.height = requiredHeight + 'px'
+  canvas.width = wrapWidth * dpr
+  canvas.height = requiredHeight * dpr
   ctx.scale(dpr, dpr)
 
-  const dotSize = 6
-  const gap = 5
-  const cellSize = dotSize + gap
-  const cols = Math.floor(rect.width / cellSize) || 1
-  const total = props.totalDots
-  const passed = props.passedDots
-  const accent = accentColor.value
-
-  ctx.clearRect(0, 0, rect.width, rect.height)
+  ctx.clearRect(0, 0, wrapWidth, requiredHeight)
 
   for (let i = 0; i < total; i++) {
     const col = i % cols
     const row = Math.floor(i / cols)
     const x = col * cellSize
     const y = row * cellSize
-    if (y + dotSize > rect.height) break
 
     const isPassed = i < passed
     if (isPassed) { ctx.shadowColor = accent; ctx.shadowBlur = 4 }
     else { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0 }
 
     ctx.fillStyle = isPassed ? accent : '#555555'
-    const radius = (dotSize / 2) * (dotBorderRadius.value === '50%' ? 1 : parseInt(dotBorderRadius.value) / 50)
+    const radius = (ds / 2) * (dotBorderRadius.value === '50%' ? 1 : parseInt(dotBorderRadius.value) / 50)
     ctx.beginPath()
-    ctx.roundRect(x, y, dotSize, dotSize, radius)
+    ctx.roundRect(x, y, ds, ds, radius)
     ctx.fill()
   }
   ctx.shadowColor = 'transparent'
@@ -191,18 +220,18 @@ function scheduleRedraw() {
   }
 }
 
-watch(() => [props.passedDots, props.totalDots], scheduleRedraw)
-watch([accentColor, dotBorderRadius], scheduleRedraw)
+watch(() => [displayPassedDots.value, props.totalDots], scheduleRedraw)
+watch([accentColor, dotBorderRadius, dotSizeSetting], scheduleRedraw)
 watch(useCanvas, async (val) => {
   if (val) { await nextTick(); setupCanvasResize(); drawCanvas() }
   else { cleanupCanvasResize() }
 })
 
 function setupCanvasResize() {
-  const canvas = canvasRef.value
-  if (!canvas) return
+  const wrap = canvasWrapRef.value
+  if (!wrap) return
   resizeObserver = new ResizeObserver(() => drawCanvas())
-  resizeObserver.observe(canvas)
+  resizeObserver.observe(wrap)
 }
 function cleanupCanvasResize() {
   resizeObserver?.disconnect()
@@ -216,7 +245,8 @@ onMounted(() => {
       computeOriginalPositions()
     })
   }
-  prevPassed = props.passedDots
+  displayPassedDots.value = 0
+  updateDisplayPassedDots(true)
 })
 
 onUnmounted(() => {
@@ -233,7 +263,7 @@ onUnmounted(() => {
     ref="containerRef"
     class="grid justify-center"
     :style="{
-      gridTemplateColumns: `repeat(auto-fill, 10px)`,
+      gridTemplateColumns: `repeat(auto-fill, ${dotSizeSetting}px)`,
       gap: '5px',
       padding: '4px',
     }"
@@ -243,19 +273,19 @@ onUnmounted(() => {
     <div
       v-for="i in totalDots"
       :key="i"
-      class="w-2.5 h-2.5 transition-colors duration-300 will-change-transform"
+      class="transition-colors duration-300 will-change-transform"
       :style="{
+        width: dotSizeSetting + 'px',
+        height: dotSizeSetting + 'px',
         borderRadius: dotBorderRadius,
-        backgroundColor: i <= passedDots ? accentColor : '#555555',
-        boxShadow: i <= passedDots ? `0 0 5px ${accentColor}80` : 'none',
+        backgroundColor: i <= displayPassedDots ? accentColor : '#555555',
+        boxShadow: i <= displayPassedDots ? `0 0 5px ${accentColor}80` : 'none',
       }"
     />
   </div>
 
   <!-- Canvas 模式 -->
-  <canvas
-    v-else
-    ref="canvasRef"
-    class="w-full h-full block"
-  />
+  <div v-else ref="canvasWrapRef" class="w-full">
+    <canvas ref="canvasRef" class="block" />
+  </div>
 </template>
