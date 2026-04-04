@@ -71,7 +71,7 @@ export function useStats() {
     entry.records.push({
       label,
       labelColor,
-      startTime: Date.now(),
+      startTime: Date.now() - durationMin * 60_000,
       durationMin,
       completed,
     })

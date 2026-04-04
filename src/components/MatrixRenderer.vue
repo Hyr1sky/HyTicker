@@ -19,7 +19,7 @@ const displayPassedDots = ref(0)
 const containerRef = ref<HTMLElement | null>(null)
 
 // Per-dot original positions (grid-relative), computed once on layout
-interface DotMeta { el: HTMLElement; origX: number; origY: number; animator: gsap.core.Timeline | null }
+interface DotMeta { el: HTMLElement; origX: number; origY: number; animator: gsap.core.Animation | null }
 let dotMetas: DotMeta[] = []
 
 function computeOriginalPositions() {
@@ -108,31 +108,33 @@ function updateDisplayPassedDots(forceRestart = false) {
   }
 
   const target = props.passedDots
-
+  
   if (forceRestart) {
     displayPassedDots.value = 0
   }
-
+  
   const current = displayPassedDots.value
   const distance = Math.abs(target - current)
 
-  if (distance === 0) return
-
-  if (distance <= 1) {
+  if (distance === 0) {
     displayPassedDots.value = target
-  } else {
-    // Animated sequential fill over time
-    const dur = Math.min(2.0, Math.max(0.5, distance * 0.003))
-    const proxy = { val: current }
-    animationObj = gsap.to(proxy, {
-      val: target,
-      duration: dur,
-      ease: 'power2.inOut',
-      onUpdate: () => {
-        displayPassedDots.value = Math.round(proxy.val)
-      }
-    })
+    return
   }
+
+  // 统一点亮逻辑（DOM 和 Canvas 共用数值插值）
+  // 利用纯数值补间，让 CSS 负责 DOM 环境下的样式过渡，逐个渲染
+  const isBatched = distance > 1
+  const dur = isBatched ? Math.min(1.2, Math.max(0.3, distance * 0.003)) : 0.6
+  
+  const proxy = { val: current }
+  animationObj = gsap.to(proxy, {
+    val: target,
+    duration: dur,
+    ease: 'power1.inOut',
+    onUpdate: () => {
+      displayPassedDots.value = Math.round(proxy.val)
+    }
+  })
 }
 
 watch(() => props.totalDots, () => {
@@ -266,6 +268,8 @@ onUnmounted(() => {
       gridTemplateColumns: `repeat(auto-fill, ${dotSizeSetting}px)`,
       gap: '5px',
       padding: '4px',
+      '--accent': accentColor,
+      '--accent-glow': accentColor + '80'
     }"
     @mousemove="onMouseMove"
     @mouseleave="onMouseLeave"
@@ -273,13 +277,12 @@ onUnmounted(() => {
     <div
       v-for="i in totalDots"
       :key="i"
-      class="transition-colors duration-300 will-change-transform"
+      class="dot-item will-change-transform"
+      :class="{ 'is-passed': i <= displayPassedDots }"
       :style="{
         width: dotSizeSetting + 'px',
         height: dotSizeSetting + 'px',
-        borderRadius: dotBorderRadius,
-        backgroundColor: i <= displayPassedDots ? accentColor : '#555555',
-        boxShadow: i <= displayPassedDots ? `0 0 5px ${accentColor}80` : 'none',
+        borderRadius: dotBorderRadius
       }"
     />
   </div>
@@ -289,3 +292,20 @@ onUnmounted(() => {
     <canvas ref="canvasRef" class="block" />
   </div>
 </template>
+
+<style scoped>
+.dot-item {
+  background-color: #555555;
+  box-shadow: none;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.dot-item.is-passed {
+  background-color: var(--accent);
+  box-shadow: 0 0 5px var(--accent-glow);
+  animation: dot-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+@keyframes dot-pop {
+  0% { transform: scale(0.5); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+</style>
