@@ -68,20 +68,23 @@ otification\ |
 
 ### 编译 & 运行
 
-\\\ash
 # 1. 克隆项目到本地
+```bash
 git clone https://github.com/Hyr1sky/HyTicker.git
 cd HyTicker
-
+```
 # 2. 安装前端组件依赖
+```bash
 npm install
-
+```
 # 3. 启动本地开发模式
+```bash
 npm run tauri dev
-
+```
 # 4. 构建生产安装包 (用于生成 Mac / Windows / Linux 独立客户端)
+```bash
 npm run tauri build
-\\\
+```
 
 ## 📝 快捷操作指南
 
