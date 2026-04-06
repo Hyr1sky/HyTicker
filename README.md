@@ -43,7 +43,7 @@
 ## ▶️ 预览
 
 <div align="center">
-  <video src="./public/Preview.mp4" width="50%" autoplay loop muted playsinline></video>
+  <video src="https://github.com/user-attachments/assets/e880ac5a-b9cf-4348-a7fc-33fd3d2e81fd" width="60%" autoplay loop muted playsinline></video>
 </div>
 
 ## 🛠️ 技术栈应用
